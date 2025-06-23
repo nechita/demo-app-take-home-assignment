@@ -9,6 +9,12 @@ import { routes } from '@/utils/routes'
 import { Input } from '@/components/ui/input'
 import { buttonVariants } from '@/components/ui/button'
 
+const LoadingSpinner = () => (
+    <div className="flex justify-center items-center py-4">
+        <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+)
+
 interface SearchResultsProps {
     searchTerm: string
     filteredCount: number
@@ -17,8 +23,6 @@ interface SearchResultsProps {
 }
 
 const SearchResults = ({ searchTerm, filteredCount, totalUsers, nationalities }: SearchResultsProps) => {
-    if (!searchTerm && !nationalities.length) return null
-
     return (
         <>
             {nationalities.length > 0 && (
@@ -57,11 +61,37 @@ interface UserSearchProps {
 
 export const UserSearch = ({ onSearch, nationalities, totalUsers, filteredCount }: UserSearchProps) => {
     const [searchTerm, setSearchTerm] = useState('')
+    const [mounted, setMounted] = useState(false)
+    const [searchStart, setSearchStart] = useState<number | null>(null)
 
     useEffect(() => {
-        const timer = setTimeout(() => onSearch(searchTerm), SEARCH_DEBOUNCE_MS)
+        setMounted(true)
+    }, [])
+
+    useEffect(() => {
+        if (searchTerm) {
+            setSearchStart(Date.now())
+        } else {
+            setSearchStart(null)
+        }
+    }, [searchTerm])
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onSearch(searchTerm)
+            if (searchTerm && searchStart) {
+                const duration = Date.now() - searchStart
+                fetch('/api/log_search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: searchTerm, duration }),
+                }).catch((error) => {
+                    console.error('Failed to log search:', error)
+                })
+            }
+        }, SEARCH_DEBOUNCE_MS)
         return () => clearTimeout(timer)
-    }, [searchTerm, onSearch])
+    }, [searchTerm, onSearch, searchStart])
 
     return (
         <div className="sticky top-[3.5rem] z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -85,12 +115,16 @@ export const UserSearch = ({ onSearch, nationalities, totalUsers, filteredCount 
                         </button>
                     )}
                 </div>
-                <SearchResults
-                    searchTerm={searchTerm}
-                    filteredCount={filteredCount}
-                    totalUsers={totalUsers}
-                    nationalities={nationalities}
-                />
+                {mounted ? (
+                    <SearchResults
+                        searchTerm={searchTerm}
+                        filteredCount={filteredCount}
+                        totalUsers={totalUsers}
+                        nationalities={nationalities}
+                    />
+                ) : (
+                    <LoadingSpinner />
+                )}
             </div>
         </div>
     )

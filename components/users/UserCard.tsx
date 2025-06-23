@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { User } from '@/types'
-import { MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 
@@ -19,8 +18,6 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onClick, ref }) => {
             onClick?.()
         }
     }
-
-    const mapPinGoogleSearchLink = `https://www.google.com/maps/search/${user.location.city}, ${user.location.country}`
 
     return (
         <Card

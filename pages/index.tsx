@@ -37,7 +37,6 @@ export default function Home() {
                         onLoadMore={loadMore}
                         error={error}
                         onRetry={retry}
-                        searchTerm={searchTerm}
                     />
                 </div>
             </div>

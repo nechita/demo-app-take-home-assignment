@@ -1,14 +1,7 @@
 import { User } from '@/types'
-import { MapPin, Mail, Flag, PhoneCallIcon, Phone, Smartphone } from 'lucide-react'
+import { MapPin, Mail, Flag, Phone, Smartphone } from 'lucide-react'
 import { NATIONALITIES } from '@/utils/constants'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogClose,
-    DialogDescription,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogClose, DialogDescription } from '@/components/ui/dialog'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useRef, useEffect } from 'react'

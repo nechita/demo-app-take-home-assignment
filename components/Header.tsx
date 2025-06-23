@@ -6,6 +6,7 @@ import { routes } from '@/utils/routes'
 export const Header = () => {
     const router = useRouter()
     const isSettingsPage = router.pathname === routes.settings
+    const isStatsPage = router.pathname === routes.stats
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -27,6 +28,14 @@ export const Header = () => {
                             >
                                 Settings
                                 <Settings className="ml-2 size-5" />
+                            </Link>
+                        </div>
+                        <div className="ml-auto flex items-center space-x-4">
+                            <Link
+                                href={routes.stats}
+                                className={`hover:text-primary font-medium ${isStatsPage ? 'text-primary' : 'text-muted-foreground'}`}
+                            >
+                                Stats
                             </Link>
                         </div>
                     </nav>

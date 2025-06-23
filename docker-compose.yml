@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+    redis:
+        image: redis:7-alpine
+        container_name: demo-app-redis
+        ports:
+            - '6379:6379'
+        volumes:
+            - redis-data:/data
+    stats-worker:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command: pnpm exec pm2-runtime ecosystem.config.js
+        environment:
+            - REDIS_URL=redis://redis:6379
+        depends_on:
+            - redis
+    app:
+        build: .
+        ports:
+            - '3000:3000'
+        environment:
+            - NODE_ENV=${NODE_ENV:-development}
+            - CHOKIDAR_USEPOLLING=true
+            - REDIS_URL=redis://redis:6379
+            - NEXT_PUBLIC_API_URL=https://randomuser.me/api/1.4
+        command: ${COMMAND:-pnpm dev}
+        depends_on:
+            - redis
+        volumes:
+            - /app/node_modules
+            - ./public:/app/public
+            - ./styles:/app/styles
+            - ./components:/app/components
+            - ./pages:/app/pages
+            - ./utils:/app/utils
+            - ./hooks:/app/hooks
+            - ./types:/app/types
+            - ./next.config.js:/app/next.config.js
+            - ./tailwind.config.ts:/app/tailwind.config.ts
+            - ./postcss.config.js:/app/postcss.config.js
+            - ./components.json:/app/components.json
+            - ./.env.local:/app/.env.local
+            - ./scripts:/app/scripts
+            - ./ecosystem.config.js:/app/ecosystem.config.js
+volumes:
+    redis-data:

@@ -2,7 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { User } from '@/types'
 import { fetchUsers } from '@/utils/api'
 import { USERS_PER_PAGE, MAX_USERS } from '@/utils/constants'
-import { useCallback, useRef, useMemo } from 'react'
+import { useCallback, useRef, useMemo, useEffect } from 'react'
 
 interface UseUsersProps {
     nationalities?: string[]
@@ -15,6 +15,11 @@ interface ErrorState {
     status?: number
 }
 
+interface ApiError extends Error {
+    code?: string
+    status?: number
+}
+
 const STALE_TIME = 5 * 60 * 1000
 const GC_TIME = 10 * 60 * 1000
 const INITIAL_PAGE_PARAM = 1
@@ -22,8 +27,23 @@ const INITIAL_PAGE_PARAM = 1
 export const useUsers = ({ nationalities, searchTerm }: UseUsersProps = {}) => {
     const abortControllerRef = useRef<AbortController | null>(null)
 
+    // Normalize search term
+    const normalizedSearchTerm = useMemo(() => {
+        return searchTerm?.toLowerCase().trim() || ''
+    }, [searchTerm])
+
+    const hasActiveSearch = normalizedSearchTerm.length > 0
+
+    // Cleanup abort controller on unmount
+    useEffect(() => {
+        return () => {
+            abortControllerRef.current?.abort()
+        }
+    }, [])
+
     const queryFn = useCallback(
         async ({ pageParam = INITIAL_PAGE_PARAM }) => {
+            // Abort previous request
             abortControllerRef.current?.abort()
             abortControllerRef.current = new AbortController()
 
@@ -36,8 +56,8 @@ export const useUsers = ({ nationalities, searchTerm }: UseUsersProps = {}) => {
                 if (error instanceof Error) {
                     const apiError: ErrorState = {
                         message: error.message,
-                        code: (error as any).code,
-                        status: (error as any).status,
+                        code: (error as ApiError).code,
+                        status: (error as ApiError).status,
                     }
                     throw apiError
                 }
@@ -47,8 +67,8 @@ export const useUsers = ({ nationalities, searchTerm }: UseUsersProps = {}) => {
         [nationalities]
     )
 
-    const { data, fetchNextPage, hasNextPage, isLoading, error, refetch } = useInfiniteQuery({
-        queryKey: ['users', { nationalities, searchTerm }],
+    const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, error, refetch } = useInfiniteQuery({
+        queryKey: ['users', { nationalities }], // Remove searchTerm from queryKey
         queryFn,
         getNextPageParam: (lastPage, allPages) => {
             const totalUsers = allPages.reduce((count, page) => count + page.results.length, 0)
@@ -58,6 +78,7 @@ export const useUsers = ({ nationalities, searchTerm }: UseUsersProps = {}) => {
         staleTime: STALE_TIME,
         gcTime: GC_TIME,
         refetchOnWindowFocus: false,
+        enabled: !hasActiveSearch, // Disable query when searching
     })
 
     const { uniqueUsers, totalLoadedUsers } = useMemo(() => {
@@ -80,19 +101,39 @@ export const useUsers = ({ nationalities, searchTerm }: UseUsersProps = {}) => {
         }
     }, [data?.pages])
 
+    // Pre-compute full names for efficient filtering
+    const usersWithFullNames = useMemo(() => {
+        return uniqueUsers.map((user) => ({
+            ...user,
+            fullName: `${user.name.first} ${user.name.last}`.toLowerCase(),
+        }))
+    }, [uniqueUsers])
+
     const filteredUsers = useMemo(() => {
-        const normalizedSearchTerm = searchTerm?.toLowerCase().trim() || ''
         if (!normalizedSearchTerm) return uniqueUsers
 
-        return uniqueUsers.filter((user) => {
-            const fullName = `${user.name.first} ${user.name.last}`.toLowerCase()
-            return fullName.includes(normalizedSearchTerm)
-        })
-    }, [uniqueUsers, searchTerm])
+        // Use pre-computed full names for faster filtering
+        return usersWithFullNames
+            .filter((user) => user.fullName.includes(normalizedSearchTerm))
+            .map(({ fullName, ...user }) => user) // Remove fullName from result
+    }, [usersWithFullNames, normalizedSearchTerm])
+
+    // Determine if we can load more
+    const canLoadMore = !!hasNextPage && !isFetchingNextPage
+
+    // Load more function that only works when not searching
+    const loadMore = useCallback(() => {
+        if (canLoadMore) {
+            fetchNextPage()
+        }
+    }, [canLoadMore, fetchNextPage])
+
+    // Determine loading state
+    const loading = hasActiveSearch ? false : isLoading
 
     return {
         users: filteredUsers,
-        loading: isLoading,
+        loading,
         error: error
             ? {
                   message: (error as ErrorState).message || 'An unknown error occurred',
@@ -100,9 +141,11 @@ export const useUsers = ({ nationalities, searchTerm }: UseUsersProps = {}) => {
                   status: (error as ErrorState).status,
               }
             : null,
-        hasMore: !!hasNextPage,
-        loadMore: () => fetchNextPage(),
+        hasMore: canLoadMore,
+        loadMore,
         retry: refetch,
         totalLoadedUsers,
+        isSearching: hasActiveSearch,
+        isFetchingNextPage: !hasActiveSearch && isFetchingNextPage,
     }
 }

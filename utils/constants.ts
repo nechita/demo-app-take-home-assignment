@@ -1,7 +1,7 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://randomuser.me/api/1.4'
 
 // API_SEED is used to generate the same set of users for each request
-export const API_SEED = process.env.NEXT_PUBLIC_API_SEED
+export const API_SEED = process.env.NEXT_PUBLIC_API_SEED || 'demo-app'
 
 export const USERS_PER_PAGE = 50
 export const MAX_USERS = 1000

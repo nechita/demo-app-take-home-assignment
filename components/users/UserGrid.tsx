@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { User } from '@/types'
 import { UserCard } from './UserCard'
 import { UserModal } from './UserModal'
@@ -14,7 +14,6 @@ interface UserGridProps {
     onLoadMore: () => void
     error: { message: string; code?: string; status?: number } | null
     onRetry: () => void
-    searchTerm?: string
     totalUsersLoaded: number
 }
 
@@ -60,52 +59,13 @@ const UserCounter = ({ count }: { count: number }) => (
 const UserList = ({ users, onUserSelect }: { users: User[]; onUserSelect: (user: User) => void }) => (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {users.map((user) => (
-            <UserCard key={`${user.name.first}-${user.name.last}`} user={user} onClick={() => onUserSelect(user)} />
+            <UserCard key={user.id} user={user} onClick={() => onUserSelect(user)} />
         ))}
     </div>
 )
 
-export const UserGrid = ({
-    users,
-    loading,
-    hasMore,
-    onLoadMore,
-    error,
-    onRetry,
-    searchTerm,
-    totalUsersLoaded,
-}: UserGridProps) => {
+export const UserGrid = ({ users, loading, hasMore, onLoadMore, error, onRetry, totalUsersLoaded }: UserGridProps) => {
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
-    const observerRef = useRef<IntersectionObserver | undefined>(undefined)
-    const loadMoreRef = useRef<HTMLDivElement>(null)
-    console.log('totalUsersLoaded', totalUsersLoaded)
-    useEffect(() => {
-        const currentElement = loadMoreRef.current
-
-        if (currentElement) {
-            observerRef.current = new IntersectionObserver(
-                (entries) => {
-                    const firstEntry = entries[0]
-                    if (firstEntry.isIntersecting && hasMore && !loading && users.length < MAX_USERS) {
-                        onLoadMore()
-                    }
-                },
-                {
-                    root: null,
-                    rootMargin: '100px',
-                    threshold: 0.1,
-                }
-            )
-
-            observerRef.current.observe(currentElement)
-        }
-
-        return () => {
-            if (observerRef.current && currentElement) {
-                observerRef.current.unobserve(currentElement)
-            }
-        }
-    }, [hasMore, loading, onLoadMore, users.length])
 
     return (
         <>
@@ -115,9 +75,20 @@ export const UserGrid = ({
 
             {error && <ErrorDisplay error={error} onRetry={onRetry} />}
 
-            {(loading || (hasMore && users.length < MAX_USERS)) && !error && (
-                <div ref={loadMoreRef} className="mt-8 flex justify-center py-4">
-                    <LoadingSpinner />
+            {loading && !users.length && <LoadingSpinner />}
+
+            {hasMore && totalUsersLoaded < MAX_USERS && !error && (
+                <div className="mt-8 flex justify-center py-4">
+                    <Button onClick={onLoadMore} disabled={loading}>
+                        {loading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                Loading...
+                            </div>
+                        ) : (
+                            'Load more users'
+                        )}
+                    </Button>
                 </div>
             )}
 
@@ -125,7 +96,7 @@ export const UserGrid = ({
                 <div className="mt-8 text-center text-muted-foreground">No users found</div>
             )}
 
-            {!loading && users.length >= MAX_USERS && (
+            {!loading && totalUsersLoaded >= MAX_USERS && (
                 <div className="mt-8 text-center text-muted-foreground">End of users catalog.</div>
             )}
 

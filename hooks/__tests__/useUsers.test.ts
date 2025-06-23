@@ -85,18 +85,26 @@ describe('useUsers', () => {
 
     it('filters users by search term', async () => {
         const mockResponse = {
-            results: [mockUser1, mockUser2],
-            info: { seed: 'test', results: 2, page: 1, version: '1.0' },
+            results: [mockUser1, mockUser2, mockUser3],
+            info: { seed: 'test', results: 3, page: 1, version: '1.0' },
         }
         ;(fetchUsers as jest.Mock).mockResolvedValue(mockResponse)
 
-        const { result } = renderHook(() => useUsers({ searchTerm: 'john' }), {
+        const { result, rerender } = renderHook(({ searchTerm }: { searchTerm?: string }) => useUsers({ searchTerm }), {
             wrapper: createWrapper(),
+            initialProps: { searchTerm: undefined as string | undefined },
         })
 
         await waitFor(() => {
+            expect(result.current.users).toHaveLength(3)
+        })
+
+        rerender({ searchTerm: 'jane' })
+
+        await waitFor(() => {
             expect(result.current.users).toHaveLength(1)
-            expect(result.current.users[0].name.first).toBe('John')
+            expect(result.current.users[0].name.first).toBe('Jane')
+            expect(result.current.isSearching).toBe(true)
         })
     })
 
