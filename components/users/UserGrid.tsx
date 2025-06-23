@@ -1,11 +1,11 @@
-import { useState, Suspense } from 'react'
+import { Button } from '@/components/ui/button'
 import { User } from '@/types'
+import { MAX_USERS, USERS_PER_PAGE } from '@/utils/constants'
+import { AnimatePresence, motion } from 'framer-motion'
+import { AlertCircle } from 'lucide-react'
+import { Suspense, useState } from 'react'
 import { UserCard } from './UserCard'
 import { UserModal } from './UserModal'
-import { MAX_USERS, USERS_PER_PAGE } from '@/utils/constants'
-import { Button } from '@/components/ui/button'
-import { AlertCircle } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 interface UserGridProps {
     users: User[]
@@ -59,11 +59,10 @@ const UserCounter = ({ count }: { count: number }) => (
 const UserList = ({ users, onUserSelect }: { users: User[]; onUserSelect: (user: User) => void }) => (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {users.map((user) => (
-            <UserCard key={user.id} user={user} onClick={() => onUserSelect(user)} />
+            <UserCard key={`${user.name.first}-${user.name.last}`} user={user} onClick={() => onUserSelect(user)} />
         ))}
     </div>
 )
-
 export const UserGrid = ({ users, loading, hasMore, onLoadMore, error, onRetry, totalUsersLoaded }: UserGridProps) => {
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
 

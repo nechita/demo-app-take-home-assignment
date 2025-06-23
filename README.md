@@ -215,14 +215,20 @@ If `/api/stats` returns "No stats available yet.", make sure you have generated 
 - View a live dashboard of search statistics at [/stats](http://localhost:3000/stats).
 - The dashboard includes interactive charts for top queries, hourly search volume, and request timing.
 - Accessible from the main navigation header.
+- Click to recompute stats option is available in the stats screen.
 
 ## One-Command Docker Startup
 
 To run the entire stack (app, Redis, stats-worker) with hot reload and local env support:
 
 ```bash
-docker compose up --build
+pnpm docker:dev
 ```
+
+This is equivalent to `docker compose up --build` but with proper environment variables set:
+
+- `NODE_ENV=development`
+- `COMMAND="pnpm dev"`
 
 - The app will be available at [http://localhost:3000](http://localhost:3000)
 - All services (app, Redis, stats-worker) start together
