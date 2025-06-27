@@ -1,15 +1,21 @@
-FROM node:22-alpine AS builder
+FROM node:22-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
+
+FROM base AS dev
 COPY . .
-COPY .env.local ./
+EXPOSE 3000
+CMD ["pnpm", "dev"]
+
+FROM base AS builder
+COPY . .
 ARG NEXT_PUBLIC_API_URL=https://randomuser.me/api/1.4
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm build
 
-FROM node:22-alpine AS runner
+FROM node:22-alpine AS prod
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY --from=builder /app/package.json ./
@@ -29,6 +35,5 @@ COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/ecosystem.config.js ./
 COPY --from=builder /app/.env.local ./
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 EXPOSE 3000
 CMD ["pnpm", "start"]

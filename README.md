@@ -110,7 +110,7 @@ This builds and runs the optimized production version.
 Stop all containers:
 
 ```bash
-pnpm docker:down
+pnpm docker:down --remove-orphans
 ```
 
 ### Notes
@@ -136,7 +136,7 @@ pnpm docker:down
 - `pnpm prettier` - Format code with Prettier
 - `pnpm docker:dev` - Start Docker development mode
 - `pnpm docker:prod` - Start Docker production mode
-- `pnpm docker:down` - Stop Docker containers
+- `pnpm docker:down` - Stop Docker containers and remove orphaned containers
 
 ### Pre-commit Hooks
 

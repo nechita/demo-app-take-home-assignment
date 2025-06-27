@@ -18,9 +18,9 @@
         "check-types": "tsc --noEmit",
         "prettier": "prettier --write .",
         "pre-commit": "lint-staged && npm run check-types",
-        "docker:dev": "NODE_ENV=development COMMAND=\"pnpm dev\" docker-compose up --build",
-        "docker:prod": "NODE_ENV=production COMMAND=\"pnpm start\" docker-compose up --build",
-        "docker:down": "docker-compose down"
+        "docker:dev": "pnpm run docker:down && docker-compose --profile dev up --build",
+        "docker:prod": "pnpm run docker:down && docker-compose --profile prod up --build",
+        "docker:down": "docker-compose down --remove-orphans"
     },
     "dependencies": {
         "@radix-ui/react-avatar": "1.1.2",
