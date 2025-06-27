@@ -57,13 +57,13 @@ A Next.js application that displays a grid of users, search functionality, natio
     Note: While you can use npm or Yarn, I recommend pnpm for consistent dependency management. If you decide, just make
     sure you delete the `pnpm-lock.yaml` and use your preferred package manager.
 
-3. Set up environment variables:
+3. Set up environment variables (optional):
+
+    Create `.env.local` with your desired seed value or copy the example file:
 
     ```bash
     cp .env.example.local .env.local
     ```
-
-    Update `NEXT_PUBLIC_API_SEED` in `.env.local` with your desired seed value or just leave it as is.
 
 4. Start the development server:
 
@@ -151,7 +151,7 @@ The project uses Husky and lint-staged to run the following checks before each c
 
 ```
 ├── components/         # React components
-│   ├── layout/         # Layout components
+│   ├── ui/             # Shadcn UI components
 │   ├── users/          # User-related components
 │   └── settings/       # Settings components
 ├── hooks/              # Custom React hooks
@@ -162,17 +162,16 @@ The project uses Husky and lint-staged to run the following checks before each c
 
 ## Features + Tech Stack Details
 
-- Infinite scrolling grid of users
-- Real-time search functionality
+- Real-time search functionality with debouncing
 - Nationality filtering with persistence
 - Responsive design
-- Comprehensive test coverage
+- Comprehensive test coverage (Jest)
 - Pre-commit hooks for linting and testing
 - Tanstack Query for data fetching
-- Framer Motion for animations
-- Shadcn UI for UI components
+- Shadcn UI for UI components (Button, Card, Dialog, etc.)
 - Lucide Icons for icons
 - TailwindCSS for styling
+- Framer Motion for animations
 
 ## API
 
@@ -217,24 +216,6 @@ If `/api/stats` returns "No stats available yet.", make sure you have generated 
 - Accessible from the main navigation header.
 - Click to recompute stats option is available in the stats screen.
 
-## One-Command Docker Startup
-
-To run the entire stack (app, Redis, stats-worker) with hot reload and local env support:
-
-```bash
-pnpm docker:dev
-```
-
-This is equivalent to `docker compose up --build` but with proper environment variables set:
-
-- `NODE_ENV=development`
-- `COMMAND="pnpm dev"`
-
-- The app will be available at [http://localhost:3000](http://localhost:3000)
-- All services (app, Redis, stats-worker) start together
-- Uses your local `.env.local` if present
-- Hot-reloads code changes via Docker volumes
-
 ## Background Worker Troubleshooting
 
 To verify the stats-worker is running and updating stats:
@@ -245,7 +226,7 @@ To verify the stats-worker is running and updating stats:
     docker compose logs -f stats-worker
     ```
 
-    You should see lines like: `Stats updated at 2025-06-23T13:02:30.635Z` every 5 minutes.
+    You should see lines like: `Stats updated at 2024-12-23T13:02:30.635Z` every 5 minutes.
 
 2. **Check the /api/stats endpoint:**
 
